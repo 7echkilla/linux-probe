@@ -8,7 +8,7 @@ plugins = load_modules()
 for plugin in plugins.values():
     app.add_typer(plugin.get_app(), name=plugin.name)
 
-    @app.command(name="all", help="All available system information and metrics")
+    @app.command(name="all", help="System-wide metrics available under modules")
     def run_all():
         plugin.print_data()
 
