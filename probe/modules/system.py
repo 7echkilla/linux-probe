@@ -17,7 +17,7 @@ class System(Module):
         Return dictionary with all system information
         """
         data = {}
-        
+
         data.update(self._get_hostname())
         data.update(self._get_os())
         data.update(self._get_kernel())
@@ -25,51 +25,33 @@ class System(Module):
         data.update(self._get_uptime())
 
         return data
-    
+
     def _get_hostname(self):
         """
         Get device name
         """
-        hostname = platform.node()
+        return {"hostname": platform.node()}
 
-        return {"Device Name": hostname}
-    
     def _get_os(self):
         """
         Get current OS
         """
-        os = platform.system()
+        return {"os": platform.system()}
 
-        return {"OS": os}
-    
     def _get_kernel(self):
         """
         Get kernel version
         """
-        kernel = platform.release()
+        return {"kernel": platform.release()}
 
-        return {"Kernel": kernel}
-    
     def _get_architecture(self):
         """
         Get device architecture
         """
-        architecture = platform.machine()
+        return {"architecture": platform.machine()}
 
-        return {"Architecture": architecture}
-    
     def _get_uptime(self):
         """
-        Get system uptime
+        Get system uptime as raw seconds
         """
-        boot_time = psutil.boot_time()
-        elapsed_time = time.time() - boot_time
-
-        # Calculate hours, minutes and seconds
-        uptime_hours = int(elapsed_time // 3600)
-        uptime_minutes = int((elapsed_time % 3600) // 60)
-        uptime_seconds = int(elapsed_time % 60)
-
-        string = f"{uptime_hours} hours {uptime_minutes} minutes {uptime_seconds} seconds"
-
-        return {"Uptime": string}
+        return {"uptime_seconds": round(time.time() - psutil.boot_time(), 2)}

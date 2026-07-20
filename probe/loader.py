@@ -1,8 +1,12 @@
 import pkgutil
 import importlib
+import logging
+
 import probe.modules
 
 from probe.module import Module
+
+logger = logging.getLogger(__name__)
 
 def load_modules():
     """
@@ -13,17 +17,18 @@ def load_modules():
     for _, name, _ in pkgutil.iter_modules(probe.modules.__path__):
         module = importlib.import_module(f"probe.modules.{name}")
 
-        for object in vars(module).values():
-            if (isinstance(object, type) and issubclass(object, Module) and object is not Module):
-                instance = object()
+        for member in vars(module).values():
+            if (isinstance(member, type) and issubclass(member, Module) and member is not Module):
+                instance = member()
 
                 if (not instance.name):
-                    print(f"Skipped invalid module with no name")
-                
+                    logger.warning("Skipped invalid module with no name")
+
                 elif (instance.name in modules):
-                    print(f"Skipped module with duplicate name: {instance.name}")
-                
+                    logger.warning("Skipped module with duplicate name: %s", instance.name)
+
                 else:
+                    instance.warm_up()
                     modules[instance.name] = instance
 
     return modules

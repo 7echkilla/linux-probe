@@ -12,7 +12,22 @@ class Module(ABC):
 
     @abstractmethod
     def get_data(self):
-        """Return structured diagnostic data"""
+        """
+        Return a flat dict of diagnostic data. Values must be raw and
+        JSON-serialisable: int/float/str/None, or a list[dict] for tabular
+        data (e.g. per-process rows). Numeric metrics must not be
+        pre-formatted as strings - encode the unit in the key name instead
+        (e.g. "used_gb", "uptime_seconds", "load_avg_1m").
+        """
+        pass
+
+    def warm_up(self):
+        """
+        Optional one-time hook called by the loader immediately after
+        instantiation. Override in modules that rely on psutil's stateful
+        percentage counters (cpu_percent) to make an initial call so the
+        first real get_data() call already has a delta to compute against.
+        """
         pass
 
     def get_app(self):
@@ -28,12 +43,20 @@ class Module(ABC):
                 self.print_data()
 
         # Explicit subcommand
-        app.command()(self.get_data)
+        @app.command(name="get-data")
+        def get_data():
+            self.print_data()
 
         return app
 
     def print_data(self):
         data = self.get_data()
-        format = " | ".join(f"{metric}: {value}" for metric, value in data.items())
+        parts = []
 
-        print(f"{self.name:10} {format}")
+        for metric, value in data.items():
+            if (isinstance(value, list)):
+                parts.append(f"{metric}: {len(value)} item(s)")
+            else:
+                parts.append(f"{metric}: {value}")
+
+        print(f"{self.name:10} " + " | ".join(parts))

@@ -5,7 +5,8 @@ description = "Linux system diagnostic tool"
 requires-python = ">=3.10"
 dependencies = [
     "typer",
-    "psutil"
+    "psutil",
+    "textual"
 ]
 
 [tool.setuptools.packages.find]
@@ -13,4 +14,4 @@ include = ["probe*"]
 
 [project.scripts]
 probe = "probe.cli:app"
-probe-monitor = "probe.monitor:run"
+probe-monitor = "probe.tui:_cli_entry"

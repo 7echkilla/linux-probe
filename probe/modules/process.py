@@ -8,35 +8,46 @@ class Process(Module):
         Information relevant to processes
         """
         self.name = "process"
-        self.description = "Processes information"
+        self.description = "Process information"
+
+    def warm_up(self):
+        """
+        Prime every process's stateful CPU usage counter so the first real
+        get_data() call has a delta to compute against.
+        """
+        for process in psutil.process_iter(["pid"]):
+            try:
+                process.cpu_percent(interval=None)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
 
     def get_data(self):
         """
         Return dictionary with all processes information
         """
-        data = {}
-        
-        data.update(self._get_top_processes())
+        return self._get_top_processes()
 
-        return data
-
-    def _get_top_processes(self):
+    def _get_top_processes(self, limit=5):
         """
-        Get top 5 processes by CPU and memory usage
+        Get top processes by CPU usage
         """
         processes = self._get_processes()
+        processes.sort(key=lambda process: process["cpu_percent"], reverse=True)
 
-        processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
-        top_processes = processes[:5]
-
-        return {"Top processes by CPU usage": top_processes}
+        return {"top_by_cpu": processes[:limit]}
 
     def _get_processes(self):
         """
         Get processes list
         """
         processes = []
-        for process in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
-            processes.append(process.info)
+
+        for process in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
+            info = process.info
+
+            if (info.get("memory_percent") is not None):
+                info["memory_percent"] = round(info["memory_percent"], 2)
+
+            processes.append(info)
 
         return processes
